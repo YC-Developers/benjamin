@@ -50,12 +50,27 @@ const Reports = () => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
   };
 
-  // Calculate total employees and average salary
-  const totalEmployees = departmentData.reduce((sum, dept) => sum + (dept.employee_count || 0), 0);
+  // Calculate total employees and average salary with NaN handling
+  const totalEmployees = departmentData.reduce((sum, dept) => {
+    const count = parseInt(dept.employee_count);
+    return sum + (isNaN(count) ? 0 : count);
+  }, 0);
+
   const totalDepartments = departmentData.length;
-  const averageNetSalary = departmentData.length > 0
-    ? departmentData.reduce((sum, dept) => sum + (parseFloat(dept.average_net_salary) || 0), 0) / departmentData.length
-    : 0;
+
+  // Calculate average net salary with proper NaN handling
+  let totalNetSalary = 0;
+  let validDepartments = 0;
+
+  departmentData.forEach(dept => {
+    const salary = parseFloat(dept.average_net_salary);
+    if (!isNaN(salary) && salary > 0) {
+      totalNetSalary += salary;
+      validDepartments++;
+    }
+  });
+
+  const averageNetSalary = validDepartments > 0 ? totalNetSalary / validDepartments : 0;
 
   const handleMonthChange = (e) => {
     setSelectedMonth(e.target.value);
@@ -102,59 +117,59 @@ const Reports = () => {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-black to-gray-600 rounded-lg blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Employees</p>
+                <p className="text-3xl font-bold text-black mt-1">{totalEmployees}</p>
+              </div>
+              <div className="bg-black p-3 rounded-lg">
                 <Users className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Employees</dt>
-                  <dd>
-                    <div className="text-lg font-bold text-gray-900">{totalEmployees}</div>
-                  </dd>
-                </dl>
-              </div>
+            </div>
+            <div className="mt-4 text-sm text-gray-500">
+              Across all departments
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-black to-gray-600 rounded-lg blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Average Net Salary</p>
+                <p className="text-3xl font-bold text-black mt-1">
+                  {isNaN(averageNetSalary) ? "$0" : formatCurrency(averageNetSalary)}
+                </p>
+              </div>
+              <div className="bg-black p-3 rounded-lg">
                 <DollarSign className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Average Net Salary</dt>
-                  <dd>
-                    <div className="text-lg font-bold text-gray-900">
-                      {formatCurrency(averageNetSalary)}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
+            </div>
+            <div className="mt-4 text-sm text-gray-500">
+              Per employee average
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-black to-gray-600 rounded-lg blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Departments</p>
+                <p className="text-3xl font-bold text-black mt-1">{totalDepartments}</p>
+              </div>
+              <div className="bg-black p-3 rounded-lg">
                 <BarChartBig className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Departments</dt>
-                  <dd>
-                    <div className="text-lg font-bold text-gray-900">{totalDepartments}</div>
-                  </dd>
-                </dl>
-              </div>
+            </div>
+            <div className="mt-4 text-sm text-gray-500">
+              Total active departments
             </div>
           </div>
         </div>

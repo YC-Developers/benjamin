@@ -116,74 +116,65 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-black to-gray-600 rounded-lg blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Employees</p>
+                <p className="text-3xl font-bold text-black mt-1">{stats.employeeCount}</p>
+              </div>
+              <div className="bg-black p-3 rounded-lg">
                 <Users className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Employees</dt>
-                  <dd>
-                    <div className="text-lg font-bold text-gray-900">{stats.employeeCount}</div>
-                  </dd>
-                </dl>
-              </div>
             </div>
-          </div>
-          <div className="bg-gray-50 px-5 py-3">
-            <div className="text-sm">
-              <Link to="/employees" className="font-medium text-blue-700 hover:text-blue-900">View all employees</Link>
+            <div className="mt-4">
+              <Link to="/employees" className="text-sm font-medium text-black hover:underline">
+                View all employees →
+              </Link>
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-black to-gray-600 rounded-lg blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Average Salary</p>
+                <p className="text-3xl font-bold text-black mt-1">
+                  ${isNaN(stats.averageSalary) ? "0.00" : stats.averageSalary.toFixed(2)}
+                </p>
+              </div>
+              <div className="bg-black p-3 rounded-lg">
                 <DollarSign className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Average Salary</dt>
-                  <dd>
-                    <div className="text-lg font-bold text-gray-900">
-                      ${stats.averageSalary.toFixed(2)}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
             </div>
-          </div>
-          <div className="bg-gray-50 px-5 py-3">
-            <div className="text-sm">
-              <Link to="/salaries" className="font-medium text-blue-700 hover:text-blue-900">View all salaries</Link>
+            <div className="mt-4">
+              <Link to="/salaries" className="text-sm font-medium text-black hover:underline">
+                View all salaries →
+              </Link>
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-black to-gray-600 rounded-lg blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Departments</p>
+                <p className="text-3xl font-bold text-black mt-1">{stats.departments.length}</p>
+              </div>
+              <div className="bg-black p-3 rounded-lg">
                 <Building2 className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Departments</dt>
-                  <dd>
-                    <div className="text-lg font-bold text-gray-900">{stats.departments.length}</div>
-                  </dd>
-                </dl>
-              </div>
             </div>
-          </div>
-          <div className="bg-gray-50 px-5 py-3">
-            <div className="text-sm">
-              <Link to="/departments" className="font-medium text-blue-700 hover:text-blue-900">View all departments</Link>
+            <div className="mt-4">
+              <Link to="/departments" className="text-sm font-medium text-black hover:underline">
+                View all departments →
+              </Link>
             </div>
           </div>
         </div>
