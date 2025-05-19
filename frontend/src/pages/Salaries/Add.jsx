@@ -6,10 +6,16 @@ import { salaryAPI, employeeAPI } from '../../utils/api';
 const AddSalary = () => {
   const [formData, setFormData] = useState({
     employeeId: '',
-    amount: '',
+    grossSalary: '',
+    deductionPercentage: '20', // Default to 20%
+    deductionAmount: '',
+    netSalary: '',
     effectiveDate: '',
     endDate: '',
   });
+
+  // State to track if we're in custom deduction mode
+  const [customDeduction, setCustomDeduction] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,10 +42,51 @@ const AddSalary = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
+
+    // Update the form data with the new value
+    const updatedFormData = {
+      ...formData,
       [name]: value,
-    }));
+    };
+
+    // If gross salary or deduction percentage changed, recalculate deduction and net salary
+    if (name === 'grossSalary' || name === 'deductionPercentage' || name === 'deductionAmount') {
+      // If we're updating gross salary or deduction percentage
+      if (name === 'grossSalary' || name === 'deductionPercentage') {
+        const grossSalary = parseFloat(name === 'grossSalary' ? value : formData.grossSalary) || 0;
+        const deductionPercentage = parseFloat(name === 'deductionPercentage' ? value : formData.deductionPercentage) || 0;
+
+        // Calculate deduction amount
+        const deductionAmount = (grossSalary * deductionPercentage / 100).toFixed(2);
+        updatedFormData.deductionAmount = deductionAmount;
+
+        // Calculate net salary
+        const netSalary = (grossSalary - parseFloat(deductionAmount)).toFixed(2);
+        updatedFormData.netSalary = netSalary;
+      }
+      // If we're directly updating the deduction amount (custom deduction mode)
+      else if (name === 'deductionAmount' && customDeduction) {
+        const grossSalary = parseFloat(formData.grossSalary) || 0;
+        const deductionAmount = parseFloat(value) || 0;
+
+        // Calculate net salary
+        const netSalary = (grossSalary - deductionAmount).toFixed(2);
+        updatedFormData.netSalary = netSalary;
+
+        // Calculate deduction percentage
+        if (grossSalary > 0) {
+          const deductionPercentage = ((deductionAmount / grossSalary) * 100).toFixed(2);
+          updatedFormData.deductionPercentage = deductionPercentage;
+        }
+      }
+    }
+
+    setFormData(updatedFormData);
+  };
+
+  // Toggle between percentage-based and custom deduction
+  const toggleCustomDeduction = () => {
+    setCustomDeduction(!customDeduction);
   };
 
   const handleSubmit = async (e) => {
@@ -52,8 +99,18 @@ const AddSalary = () => {
       return;
     }
 
-    if (!formData.amount || isNaN(parseFloat(formData.amount)) || parseFloat(formData.amount) <= 0) {
-      setError('Please enter a valid amount greater than zero');
+    if (!formData.grossSalary || isNaN(parseFloat(formData.grossSalary)) || parseFloat(formData.grossSalary) <= 0) {
+      setError('Please enter a valid gross salary greater than zero');
+      return;
+    }
+
+    if (!formData.deductionAmount || isNaN(parseFloat(formData.deductionAmount))) {
+      setError('Please enter a valid deduction amount');
+      return;
+    }
+
+    if (parseFloat(formData.deductionAmount) >= parseFloat(formData.grossSalary)) {
+      setError('Deduction amount cannot be greater than or equal to gross salary');
       return;
     }
 
@@ -71,10 +128,10 @@ const AddSalary = () => {
     try {
       setSaving(true);
 
-      // Calculate deductions (20% of gross salary for this example)
-      const grossSalary = parseFloat(formData.amount);
-      const totalDeduction = grossSalary * 0.2;
-      const netSalary = grossSalary - totalDeduction;
+      // Get values from form data
+      const grossSalary = parseFloat(formData.grossSalary);
+      const totalDeduction = parseFloat(formData.deductionAmount);
+      const netSalary = parseFloat(formData.netSalary);
 
       // Format the data according to what the backend expects
       const salaryData = {
@@ -167,8 +224,8 @@ const AddSalary = () => {
             </div>
 
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-                Amount *
+              <label htmlFor="grossSalary" className="block text-sm font-medium text-gray-700">
+                Gross Salary *
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -176,16 +233,99 @@ const AddSalary = () => {
                 </div>
                 <input
                   type="number"
-                  id="amount"
-                  name="amount"
+                  id="grossSalary"
+                  name="grossSalary"
                   step="0.01"
                   min="0"
-                  value={formData.amount}
+                  value={formData.grossSalary}
                   onChange={handleChange}
                   className="pl-7 mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-500 focus:border-gray-500"
                   required
                 />
               </div>
+              <p className="mt-1 text-xs text-gray-500">
+                The total salary before deductions
+              </p>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center">
+                <label htmlFor="deductionPercentage" className="block text-sm font-medium text-gray-700">
+                  {customDeduction ? 'Deduction Amount *' : 'Deduction Percentage *'}
+                </label>
+                <button
+                  type="button"
+                  onClick={toggleCustomDeduction}
+                  className="text-xs text-black hover:underline"
+                >
+                  {customDeduction ? 'Use percentage' : 'Custom amount'}
+                </button>
+              </div>
+
+              {!customDeduction ? (
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <input
+                    type="number"
+                    id="deductionPercentage"
+                    name="deductionPercentage"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={formData.deductionPercentage}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-500 focus:border-gray-500 pr-12"
+                    required
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">%</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">$</span>
+                  </div>
+                  <input
+                    type="number"
+                    id="deductionAmount"
+                    name="deductionAmount"
+                    step="0.01"
+                    min="0"
+                    value={formData.deductionAmount}
+                    onChange={handleChange}
+                    className="pl-7 mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-500 focus:border-gray-500"
+                    required
+                  />
+                </div>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                {!customDeduction
+                  ? `Deduction amount: $${formData.deductionAmount || '0.00'}`
+                  : `Equivalent to ${formData.deductionPercentage || '0'}% of gross salary`
+                }
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="netSalary" className="block text-sm font-medium text-gray-700">
+                Net Salary
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">$</span>
+                </div>
+                <input
+                  type="text"
+                  id="netSalary"
+                  name="netSalary"
+                  value={formData.netSalary}
+                  className="pl-7 mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-500"
+                  disabled
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Gross salary minus deductions
+              </p>
             </div>
 
             <div>
