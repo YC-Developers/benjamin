@@ -143,7 +143,9 @@ const Reports = () => {
               <div>
                 <p className="text-sm font-medium text-gray-500">Average Net Salary</p>
                 <p className="text-3xl font-bold text-black mt-1">
-                  {isNaN(averageNetSalary) ? "$0" : formatCurrency(averageNetSalary)}
+                  {isNaN(averageNetSalary) || averageNetSalary === 0 ?
+                    "$0.00" :
+                    formatCurrency(parseFloat(averageNetSalary))}
                 </p>
               </div>
               <div className="bg-black p-3 rounded-lg">

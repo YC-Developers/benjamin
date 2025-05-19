@@ -70,12 +70,27 @@ const AddSalary = () => {
 
     try {
       setSaving(true);
-      await salaryAPI.create({
-        ...formData,
-        amount: parseFloat(formData.amount).toFixed(2) // Ensure proper number format
-      });
+
+      // Calculate deductions (20% of gross salary for this example)
+      const grossSalary = parseFloat(formData.amount);
+      const totalDeduction = grossSalary * 0.2;
+      const netSalary = grossSalary - totalDeduction;
+
+      // Format the data according to what the backend expects
+      const salaryData = {
+        employeeNumber: formData.employeeId,
+        grossSalary: grossSalary.toFixed(2),
+        totalDeduction: totalDeduction.toFixed(2),
+        netSalary: netSalary.toFixed(2),
+        month: formData.effectiveDate // Using effective date as the month
+      };
+
+      console.log('Sending salary data:', salaryData);
+
+      await salaryAPI.create(salaryData);
       navigate('/salaries');
     } catch (err) {
+      console.error('Error creating salary:', err);
       setError(err.response?.data?.message || 'Failed to create salary record');
     } finally {
       setSaving(false);
@@ -144,8 +159,8 @@ const AddSalary = () => {
               >
                 <option value="">Select an employee</option>
                 {employees.map((employee) => (
-                  <option key={employee.id} value={employee.id}>
-                    {employee.first_name} {employee.last_name}
+                  <option key={employee.employee_number} value={employee.employee_number}>
+                    {employee.first_name} {employee.last_name} ({employee.employee_number})
                   </option>
                 ))}
               </select>
@@ -210,7 +225,7 @@ const AddSalary = () => {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             >
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Saving...' : 'Save Salary Record'}

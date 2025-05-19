@@ -14,10 +14,29 @@ const SalaryList = () => {
       try {
         setLoading(true);
         const data = await salaryAPI.getAll();
-        setSalaries(data);
+
+        // Log the data to see what we're getting from the API
+        console.log('Salary data from API:', data);
+
+        // Map the data to match our frontend structure if needed
+        const mappedData = data.map(salary => ({
+          id: salary.id,
+          employee_number: salary.employee_number,
+          first_name: salary.first_name,
+          last_name: salary.last_name,
+          position: salary.position,
+          department_name: salary.department_name,
+          amount: salary.net_salary, // Use net_salary as the amount
+          gross_salary: salary.gross_salary,
+          total_deduction: salary.total_deduction,
+          effective_date: salary.month, // Use month as the effective date
+          month: salary.month
+        }));
+
+        setSalaries(mappedData);
       } catch (err) {
         setError('Failed to load salaries');
-        console.error(err);
+        console.error('Error fetching salaries:', err);
       } finally {
         setLoading(false);
       }
@@ -140,14 +159,19 @@ const SalaryList = () => {
                           </div>
                         </div>
                         <div className="text-sm text-gray-500">
-                          Effective: {formatDate(salary.effective_date)} {salary.end_date && `- End: ${formatDate(salary.end_date)}`}
+                          {salary.position && <span>{salary.position} • </span>}
+                          {salary.department_name && <span>{salary.department_name} • </span>}
+                          <span>Month: {formatDate(salary.month)}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center">
-                      <div className="mr-6">
+                      <div className="mr-6 text-right">
                         <div className="text-lg font-bold text-green-600">
                           {formatCurrency(salary.amount)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Gross: {formatCurrency(salary.gross_salary)} • Deduction: {formatCurrency(salary.total_deduction)}
                         </div>
                       </div>
                       <div className="flex space-x-2">

@@ -31,8 +31,20 @@ const Dashboard = () => {
         let totalSalary = 0;
         let validSalaries = 0;
 
+        console.log('Salary data for average calculation:', salaries);
+
         salaries.forEach(salary => {
-          const amount = parseFloat(salary.amount);
+          // Try to get the salary amount from different possible fields
+          let amount = null;
+
+          if (salary.net_salary !== undefined) {
+            amount = parseFloat(salary.net_salary);
+          } else if (salary.amount !== undefined) {
+            amount = parseFloat(salary.amount);
+          } else if (salary.gross_salary !== undefined) {
+            amount = parseFloat(salary.gross_salary);
+          }
+
           if (!isNaN(amount) && amount > 0) {
             totalSalary += amount;
             validSalaries++;
@@ -40,6 +52,7 @@ const Dashboard = () => {
         });
 
         const averageSalary = validSalaries > 0 ? totalSalary / validSalaries : 0;
+        console.log('Calculated average salary:', averageSalary);
 
         // Get recent employees (last 5)
         const recentEmployees = [...employees]
@@ -144,7 +157,9 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm font-medium text-gray-500">Average Salary</p>
                 <p className="text-3xl font-bold text-black mt-1">
-                  ${isNaN(stats.averageSalary) ? "0.00" : stats.averageSalary.toFixed(2)}
+                  ${stats && stats.averageSalary !== undefined ?
+                    (isNaN(stats.averageSalary) ? "0.00" : parseFloat(stats.averageSalary).toFixed(2))
+                    : "0.00"}
                 </p>
               </div>
               <div className="bg-black p-3 rounded-lg">

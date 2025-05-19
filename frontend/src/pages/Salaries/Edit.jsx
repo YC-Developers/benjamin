@@ -13,7 +13,7 @@ const EditSalary = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  
+
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -22,23 +22,33 @@ const EditSalary = () => {
       try {
         setLoading(true);
         const salaries = await salaryAPI.getAll();
+        console.log('All salaries:', salaries);
+
         const salary = salaries.find(s => s.id.toString() === id);
-        
+        console.log('Found salary:', salary);
+
         if (!salary) {
           setError('Salary record not found');
           return;
         }
-        
+
+        // Store the employee number for later use in the update
         setFormData({
-          amount: salary.amount || '',
-          effectiveDate: salary.effective_date ? salary.effective_date.split('T')[0] : '',
-          endDate: salary.end_date ? salary.end_date.split('T')[0] : '',
+          employeeNumber: salary.employee_number,
+          // Use net_salary as the amount
+          amount: salary.net_salary || '',
+          // Calculate gross salary and deduction based on the current values
+          grossSalary: salary.gross_salary || '',
+          totalDeduction: salary.total_deduction || '',
+          // Use month as the effective date
+          effectiveDate: salary.month ? salary.month.split('T')[0] : '',
+          month: salary.month ? salary.month.split('T')[0] : '',
         });
-        
+
         setEmployeeName(`${salary.first_name} ${salary.last_name}`);
       } catch (err) {
         setError('Failed to load salary data');
-        console.error(err);
+        console.error('Error fetching salary:', err);
       } finally {
         setLoading(false);
       }
@@ -57,18 +67,42 @@ const EditSalary = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setError(null);
+
     // Validate form
-    if (!formData.amount || !formData.effectiveDate) {
-      setError('Amount and effective date are required');
+    if (!formData.amount || isNaN(parseFloat(formData.amount)) || parseFloat(formData.amount) <= 0) {
+      setError('Please enter a valid amount greater than zero');
       return;
     }
-    
+
+    if (!formData.effectiveDate) {
+      setError('Please select an effective date');
+      return;
+    }
+
     try {
       setSaving(true);
-      await salaryAPI.update(id, formData);
+
+      // Calculate values based on the entered amount
+      const netSalary = parseFloat(formData.amount);
+      // Assuming the same ratio as before, or default to 20% deduction
+      const grossSalary = netSalary / 0.8; // Assuming 20% deduction
+      const totalDeduction = grossSalary - netSalary;
+
+      // Format the data according to what the backend expects
+      const salaryData = {
+        grossSalary: grossSalary.toFixed(2),
+        totalDeduction: totalDeduction.toFixed(2),
+        netSalary: netSalary.toFixed(2),
+        month: formData.effectiveDate // Using effective date as the month
+      };
+
+      console.log('Updating salary with data:', salaryData);
+
+      await salaryAPI.update(id, salaryData);
       navigate('/salaries');
     } catch (err) {
+      console.error('Error updating salary:', err);
       setError(err.response?.data?.message || 'Failed to update salary record');
     } finally {
       setSaving(false);
@@ -77,8 +111,16 @@ const EditSalary = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-gray-500 text-xl">Loading salary data...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center">
+          <div className="flex space-x-2">
+            <div className="w-3 h-3 bg-black rounded-full animate-pulse"></div>
+            <div className="w-3 h-3 bg-black rounded-full animate-pulse delay-75"></div>
+            <div className="w-3 h-3 bg-black rounded-full animate-pulse delay-150"></div>
+            <div className="w-3 h-3 bg-black rounded-full animate-pulse delay-300"></div>
+          </div>
+          <p className="mt-4 text-gray-700 font-medium">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -87,8 +129,8 @@ const EditSalary = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Edit Salary Record</h1>
-        <Link 
-          to="/salaries" 
+        <Link
+          to="/salaries"
           className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -97,8 +139,18 @@ const EditSalary = () => {
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <span className="block sm:inline">{error}</span>
+        <div className="bg-red-100 border-l-4 border-red-600 text-red-700 p-4 rounded-md shadow" role="alert">
+          <div className="flex">
+            <div className="py-1">
+              <svg className="h-6 w-6 text-red-600 mr-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold">Error</p>
+              <p>{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -113,7 +165,7 @@ const EditSalary = () => {
                 {employeeName}
               </div>
             </div>
-            
+
             <div>
               <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
                 Amount *
@@ -135,7 +187,7 @@ const EditSalary = () => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label htmlFor="effectiveDate" className="block text-sm font-medium text-gray-700">
                 Effective Date *
@@ -150,7 +202,7 @@ const EditSalary = () => {
                 required
               />
             </div>
-            
+
             <div>
               <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
                 End Date
@@ -168,12 +220,12 @@ const EditSalary = () => {
               </p>
             </div>
           </div>
-          
+
           <div className="flex justify-end">
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             >
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Saving...' : 'Save Changes'}
